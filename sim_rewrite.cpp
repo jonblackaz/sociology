@@ -15,28 +15,39 @@ using namespace std;
 void genConfigString(unsigned int X, string & binaryString, int length);
 void binary(unsigned int number, string & partialBinaryString);
 bool isEqual(double d1, double d2); 
+unsigned int bitcount(unsigned int n);
 
 // This class handles configurations of choices, such as (0, 1, 1, 1, 0)
 // The int choices represents a number in binary that corresponds to a position.
-// Compare(1, 2) = returns int representing binary value of length n where 1 means agreement of a choice and 0 means disagreement
+// Compare(1, 2) = returns int representing binary value of length n where 0 means agreement of a choice and 1 means disagreement
 // Distance(1, 2) = number of choices minimally need to transform one into the other
 // Display() = prints out binary string
 // Mask(1, 2, 3) = returns true if 1 is equivalent to 2 for choices given by 3
 
 class Configuration {
 	public:
-		unsigned int Compare(Configuration &one, Configuration &two);
-		unsigned short int Distance (Configuration one, Configuration two);
+		unsigned int Compare(Configuration &two);
+		unsigned short int Distance (Configuration &two);
 		void Display();
-		bool Mask(Configuration &One, Configuration &Two, Configuration &Mask);
+		bool Mask(Configuration &Two, Configuration &Mask);
 		unsigned short int GetChoices() { return choices; };
 	private:
 		unsigned int choices;
 		unsigned short int length;
 };
 
-unsigned int Configuration::Compare (Configuration &One, Configuration &Two) {
-	return One.GetChoices() ^ Two.GetChoices();
+unsigned int Configuration::Compare (Configuration &Two) {
+	return this.GetChoices() ^ Two.GetChoices();
+}
+
+bool Configuration::Mask (Configuration &Two, Configuration &Mask) {
+	unsigned int comparison = this.Compare(&Two);
+	return comparison & Mask.GetChoices();
+}
+
+unsigned int Configuration::Distance (Configuration &Two) {
+	unsigned int differences = this.Compare(&Two);
+	return bitcount(differences);
 }
 
 void Display() {
@@ -45,7 +56,21 @@ void Display() {
 	cout << temp;
 }
 
-/* misc. functions to handle the output of "binary" strings */
+// misc. functions to handle the output of "binary" strings //
+
+#define TWO(c)     (0x1u << (c))
+#define MASK(c)    (((unsigned int)(-1)) / (TWO(TWO(c)) + 1u))
+#define COUNT(x,c) ((x) & MASK(c)) + (((x) >> (TWO(c))) & MASK(c))
+
+int bitcount (unsigned int n)  {
+n = COUNT(n, 0) ;
+n = COUNT(n, 1) ;
+n = COUNT(n, 2) ;
+n = COUNT(n, 3) ;
+n = COUNT(n, 4) ;
+  /* n = COUNT(n, 5) ;    for 64-bit integers */
+return n ;
+}
 
 void binary(unsigned int number, string & partialBinaryString)
 {
@@ -89,21 +114,7 @@ bool isEqual(double d1, double d2)
 }
 
 
-/* end misc. functions */
-
-class Position {
-	public:
-		Position();
-		~Position();
-		bool Compare(Position Other);
-	private:
-		Configuration itsConfig;
-		double itsFitness; 
-};
-
-bool Position::Compare(Position Other) {
-	
-}
+// end misc. functions //
 
 class Landscape {
 	public:
@@ -121,12 +132,6 @@ Landscape::Landscape ( unsigned int size ) {
 }
 
 int main () {
-	unsigned int test;
-	test = 12 ^ 4;
-	string a, b, c;
-	genConfigString(12, a, 4);
-	genConfigString(4, b, 4);
-	genConfigString(test, c, 4);
-	cout << c << ": " << a << " ^ " << b << endl;
+	
 	return 0;
 }
