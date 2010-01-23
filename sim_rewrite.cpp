@@ -115,6 +115,15 @@ bool isEqual(double d1, double d2)
 
 
 // end misc. functions //
+class Position {
+	public:
+		Position( unsigned int size);
+		~Position();
+		
+	private:
+		Configuration config;
+		double fitness;
+};
 
 class Landscape {
 	public:
@@ -128,8 +137,9 @@ class Landscape {
 };
 
 Landscape::Landscape ( unsigned int size ) {
-
+		
 }
+
 
 int main () {
 	
