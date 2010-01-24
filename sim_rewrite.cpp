@@ -123,6 +123,15 @@ class Position {
 	private:
 		Configuration config;
 		double fitness;
+
+};
+
+class Strategy {
+	public: 
+		Strategy( string options);
+		~Strategy();
+	private:
+		
 };
 
 class Landscape {
@@ -140,6 +149,15 @@ Landscape::Landscape ( unsigned int size ) {
 		
 }
 
+class Entity {
+	public:
+		Entity();
+		~Entity();
+	private:
+		bool Move();
+		Position * pPosition;
+		Strategy * pStrategy;
+}
 
 int main () {
 	
