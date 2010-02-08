@@ -10,7 +10,8 @@
 #include <cstdlib>
 
 using namespace std;
-/* Working with lots of strings of length N that need to be combined and compared. The landscape is made up of a set of positions. Each position has an associated fitness level and a set of choices. Fitness levels are calculated by finding the average of each binary choice's individual fitness. Each choice's fitness, in turn, depends on k other choices for that position. */
+/* Working with lots of strings of length N that need to be combined and compared. The landscape is made up of a set of positions. Each position has an associated fitness level and a set of choices. Fitness levels are calculated by finding the average of each binary choice's individual fitness. Each choice's fitness, in turn, depends on k other choices for that position. 
+*/
 
 void genConfigString(unsigned int X, string & binaryString, int length);
 void binary(unsigned int number, string & partialBinaryString);
@@ -26,15 +27,39 @@ unsigned int bitcount(unsigned int n);
 
 class Configuration {
 	public:
+		Configuration( unsigned int n );
+		Configuration( unsigned int n, unsigned int positionIndex, unsigned int k );
+		~Configuration();
 		unsigned int Compare(Configuration &two);
 		unsigned short int Distance (Configuration &two);
-		void Display();
+		void Display( String &boolString);
 		bool Mask(Configuration &Two, Configuration &Mask);
 		unsigned short int GetChoices() { return choices; };
 	private:
 		unsigned int choices;
 		unsigned short int length;
 };
+
+Configuration::Configuration( unsigned int n ) {
+	this.length = n;
+	this.choices = rand () % pow(2,n) ;
+}
+
+Configuration::Configuration( unsigned int n, unsigned int positionIndex) {
+	this.length = n;
+	this.choices = positionIndex;
+}
+
+Configuration::Configuration( unsigned int n, unsigned int k, bool doesNothing ) {
+	this.length = n;
+	vector<unsigned int> = possibleChoices (n, 1);
+	unsigned int thisChoice = 0;
+	for (int i = 0; i < k; i++) {
+		thisChoice = rand () % possibleChoices.size();
+		this.choices += pow(2,possibleChoices[thisChoice]);
+		possibleChoices.erase(thisChoice, thisChoice);
+	}
+}
 
 unsigned int Configuration::Compare (Configuration &Two) {
 	return this.GetChoices() ^ Two.GetChoices();
@@ -50,10 +75,8 @@ unsigned int Configuration::Distance (Configuration &Two) {
 	return bitcount(differences);
 }
 
-void Display() {
-	string temp;
-	genConfigString(choices, temp, length);
-	cout << temp;
+void Display( String &result) {
+	genConfigString(this.choices, result, this.length);
 }
 
 // misc. functions to handle the output of "binary" strings //
@@ -112,9 +135,44 @@ bool isEqual(double d1, double d2)
                 return true;
         return false;
 }
-
-
 // end misc. functions //
+
+// deals with which choices depend upon which other chocies
+class Dependencies {
+	public:
+		Dependencies( unsigned int n, unsigned int k);
+		~Dependencies();
+	private:
+		vector<vector<Configuration>> itsDependencies;
+};
+
+Dependencies:Dependencies( unsigned int n, unsigned int k ) {
+	for ( int choices = 0; choices < n; choices++) {
+		itsDependencies.push_back( vector < Configuration >() );
+		for (int interactions = 0; interactions <= k; interactions++) {
+			itsDependencies[choices].push_back(Configuration(n));
+		}
+	}
+}
+
+class Choices {
+	public:
+		Choices( unsigned int choiceIndex, Configuration mask);
+		~Choices();
+	private:
+		unsigned int choiceIndex;
+		double fitness;
+		Configuration itsConfiguration;
+};
+
+Choices::Choices ( unsigned int choiceIndex, Configuration mask ) {
+	fitness = (double)rand() / ((double)(RAND_MAX)+(double)(1));
+}
+
+   /* 
+   the individual fitness contributions of each 'choice' are averaged
+   to give the 'position' fitness level. 
+   */
 class Position {
 	public:
 		Position( unsigned int size);
@@ -123,7 +181,6 @@ class Position {
 	private:
 		Configuration config;
 		double fitness;
-
 };
 
 class Strategy {
@@ -136,17 +193,18 @@ class Strategy {
 
 class Landscape {
 	public:
-		Landscape( unsigned int size );
+		Landscape( unsigned int size, unsigned int K );
 		~Landscape();
 	private:
 		unsigned int itsN;
 		unsigned int itsK;
 		vector<Position> itsPositions;
+		bool ComputePayoff();
 		
 };
 
 Landscape::Landscape ( unsigned int size ) {
-		
+	
 }
 
 class Entity {
@@ -157,9 +215,17 @@ class Entity {
 		bool Move();
 		Position * pPosition;
 		Strategy * pStrategy;
+		double fitness;
+		bool alive;
 }
 
-int main () {
+class Multiscape : public Landscape {
+	public:
+		Multiscape ( unsigned int size, unsigned int K, unsigned int crossK, unsigned int count);
+		~Multiscape ();
+};
+
+void main () {
 	
 	return 0;
 }
