@@ -71,6 +71,7 @@ choices(positionInt)
 {
 }
 
+// choices are indexed from right to left
 Configuration::Configuration( unsigned int n, unsigned int k, bool defaultIndex, unsigned int index  ):
 itsN(n),
 itsK(k),
@@ -86,7 +87,7 @@ choices(0)
 	}
 	
 	if (defaultIndex == true) {
-		iter = possibleChoices.begin() + index;
+		iter = possibleChoices.end() - (index + 1);
 		possibleChoices.erase(iter);
 	}
 
@@ -199,6 +200,7 @@ void Dependencies::Show() {
 	}
 }
 
+
 class Choices {
 	public:
 		Choices( unsigned int choiceIndex, unsigned int itsK, Configuration &mask);
@@ -211,29 +213,27 @@ class Choices {
 
 Choices::Choices ( unsigned int choiceIndex, unsigned int itsK, Configuration &mask ) {
 	unsigned int itsN = mask.GetN();
-	int kk = 0;
+	int kk = itsN;
 	unsigned int choiceInt = 0;
 	vector<unsigned int> possibleChoices (itsN, 0);
 	vector<unsigned int>::iterator iter;
 	unsigned int thisChoice = 0;
 	
 	for(iter = possibleChoices.begin(); iter != possibleChoices.end(); ++iter) {
-		*iter = kk++;
+		*iter = pow(2, --kk);
 	}
 	
-	/*
-	iter = possibleChoices.begin() + index;
-	possibleChoices.erase(iter);
-	*/
-	
 	string temp;
+	double fitness;
 	unsigned int totalCombinations = pow(2, itsK + 1);
 	
 	mask.Display(temp);
 	
+	cout << "MASK: " << temp << endl;
+	
 	// get rid of the choices that don't matter
-	for (unsigned int pp = (itsN); pp  > 0; pp--) {
-		if (temp[pp] == '0') {
+	for ( int pp = itsN - 1; pp  >= 0; pp--) {
+		if ( temp[pp] == '0' && pp != choiceIndex ) {
 			iter = possibleChoices.begin() + pp;
 			possibleChoices.erase(iter);
 		}
@@ -243,34 +243,26 @@ Choices::Choices ( unsigned int choiceIndex, unsigned int itsK, Configuration &m
 	unsigned int tempChoice = 0;
 	unsigned int testValue;
 	unsigned int counter = 0;
-	
-	for( unsigned int mm = 0; mm < (itsK + 1); mm++) {
-	
+	unsigned int test;
+	for( unsigned int mm = 0; mm < totalCombinations; mm++) {
+
 		tempChoice = 0;
 		counter = 0;
 		for( iter = possibleChoices.begin(); iter != possibleChoices.end(); ++iter) {
-			testValue = pow(2, itsK - counter - 1);
-			if ( mm & testValue == testValue ) {
+			
+			testValue = pow(2, counter);
+			test = ((mm ^ testValue));
+			test = test & ~testValue;
+			if ( test == mm ) {
 				tempChoice += *iter;
 			}
+
+			fitness = (double)rand() / ((double)(RAND_MAX)+(double)(1));
+			// add to itsFitness
+			
 			counter++;
 		}
-		
-		genConfigString(tempChoice, temp, itsN);
-		cout << temp << endl;
 	}
-	
-	/*
-	for (int i = 0; i < itsK; i++) {
-		thisChoice = possibleChoices.size();
-		choiceInt += pow(2,possibleChoices[thisChoice]);
-		iter = possibleChoices.begin() + thisChoice;
-		possibleChoices.erase(iter);
-	}
-	*/ 
-	
-	double fitness = (double)rand() / ((double)(RAND_MAX)+(double)(1));
-	
 }
 
    /* 
@@ -351,7 +343,7 @@ class Multiscape : public Landscape {
 int main () {
 	srand( time(NULL) );
 	Dependencies test(5,3);
-	Configuration mask (7 );
+	Configuration mask (7, 3, true, 1 );
 	Choices test2( 1, 3, mask );
 	test.Show();
 	return 0;
