@@ -16,7 +16,7 @@ using namespace std;
 void genConfigString(unsigned int X, string & binaryString, int length);
 void binary(unsigned int number, string & partialBinaryString);
 bool isEqual(double d1, double d2); 
-unsigned int bitcount(unsigned int n);
+int bitcount (unsigned int n);
 
 // This class handles configurations of choices, such as (0, 1, 1, 1, 0)
 // The int choices represents a number in binary that corresponds to a position.
@@ -27,56 +27,93 @@ unsigned int bitcount(unsigned int n);
 
 class Configuration {
 	public:
+		Configuration() {};
+		Configuration( string binaryString );
 		Configuration( unsigned int n );
-		Configuration( unsigned int n, unsigned int positionIndex, unsigned int k );
-		~Configuration();
+		Configuration( unsigned int n, unsigned int positionInt);
+		Configuration( unsigned int n, unsigned int k, bool defaultIndex, unsigned int index );
+		~Configuration() {};
 		unsigned int Compare(Configuration &two);
-		unsigned short int Distance (Configuration &two);
-		void Display( String &boolString);
+		unsigned int Distance (Configuration &two);
+		bool Display( string &boolString);
 		bool Mask(Configuration &Two, Configuration &Mask);
-		unsigned short int GetChoices() { return choices; };
+		unsigned int GetChoices() { return choices; };
+		unsigned int GetN() { return itsN; };
+		unsigned int GetK() { return itsK; };
 	private:
 		unsigned int choices;
-		unsigned short int length;
+		unsigned int itsN;
+		unsigned int itsK;
 };
 
-Configuration::Configuration( unsigned int n ) {
-	this.length = n;
-	this.choices = rand () % pow(2,n) ;
+Configuration::Configuration( string binaryString )
+{
+	itsN = binaryString.size();
+	string::iterator iter;
+	unsigned int reverseIndex = itsN - 1;
+	for ( iter = binaryString.begin(); iter != binaryString.end(); ++iter){
+		if ((*iter) == '0')
+			choices += pow(2, reverseIndex--);
+	}
 }
 
-Configuration::Configuration( unsigned int n, unsigned int positionIndex) {
-	this.length = n;
-	this.choices = positionIndex;
+Configuration::Configuration( unsigned int n ):
+itsN(n),
+itsK(0)
+{
+	choices = rand() % ( (unsigned int) pow(2,itsN) ) ;
 }
 
-Configuration::Configuration( unsigned int n, unsigned int k, bool doesNothing ) {
-	this.length = n;
-	vector<unsigned int> = possibleChoices (n, 1);
+Configuration::Configuration( unsigned int n, unsigned int positionInt):
+itsN(n),
+itsK(0),
+choices(positionInt)
+{
+}
+
+Configuration::Configuration( unsigned int n, unsigned int k, bool defaultIndex, unsigned int index  ):
+itsN(n),
+itsK(k),
+choices(0)
+{
+	int kk = 0;
+	vector<unsigned int> possibleChoices (itsN, 0);
+	vector<unsigned int>::iterator iter;
 	unsigned int thisChoice = 0;
-	for (int i = 0; i < k; i++) {
-		thisChoice = rand () % possibleChoices.size();
-		this.choices += pow(2,possibleChoices[thisChoice]);
-		possibleChoices.erase(thisChoice, thisChoice);
+	
+	for(iter = possibleChoices.begin(); iter != possibleChoices.end(); ++iter) {
+		*iter = kk++;
+	}
+	
+	if (defaultIndex == true) {
+		iter = possibleChoices.begin() + index;
+		possibleChoices.erase(iter);
+	}
+
+	for (int i = 0; i < itsK; i++) {
+		thisChoice = rand() % possibleChoices.size();
+		choices += pow(2,possibleChoices[thisChoice]);
+		iter = possibleChoices.begin() + thisChoice;
+		possibleChoices.erase(iter);
 	}
 }
 
 unsigned int Configuration::Compare (Configuration &Two) {
-	return this.GetChoices() ^ Two.GetChoices();
+	return GetChoices() ^ Two.GetChoices();
 }
 
 bool Configuration::Mask (Configuration &Two, Configuration &Mask) {
-	unsigned int comparison = this.Compare(&Two);
+	unsigned int comparison = Compare(Two);
 	return comparison & Mask.GetChoices();
 }
 
 unsigned int Configuration::Distance (Configuration &Two) {
-	unsigned int differences = this.Compare(&Two);
+	unsigned int differences = Compare(Two);
 	return bitcount(differences);
 }
 
-void Display( String &result) {
-	genConfigString(this.choices, result, this.length);
+bool Configuration::Display( string &result) {
+	genConfigString(choices, result, itsN);
 }
 
 // misc. functions to handle the output of "binary" strings //
@@ -86,13 +123,13 @@ void Display( String &result) {
 #define COUNT(x,c) ((x) & MASK(c)) + (((x) >> (TWO(c))) & MASK(c))
 
 int bitcount (unsigned int n)  {
-n = COUNT(n, 0) ;
-n = COUNT(n, 1) ;
-n = COUNT(n, 2) ;
-n = COUNT(n, 3) ;
-n = COUNT(n, 4) ;
-  /* n = COUNT(n, 5) ;    for 64-bit integers */
-return n ;
+	n = COUNT(n, 0) ;
+	n = COUNT(n, 1) ;
+	n = COUNT(n, 2) ;
+	n = COUNT(n, 3) ;
+	n = COUNT(n, 4) ;
+	  /* n = COUNT(n, 5) ;    for 64-bit integers */
+	return n ;
 }
 
 void binary(unsigned int number, string & partialBinaryString)
@@ -141,32 +178,99 @@ bool isEqual(double d1, double d2)
 class Dependencies {
 	public:
 		Dependencies( unsigned int n, unsigned int k);
-		~Dependencies();
+		~Dependencies() {};
+		void Show();
 	private:
-		vector<vector<Configuration>> itsDependencies;
+		vector< Configuration > itsDependencies;
 };
 
-Dependencies:Dependencies( unsigned int n, unsigned int k ) {
-	for ( int choices = 0; choices < n; choices++) {
-		itsDependencies.push_back( vector < Configuration >() );
-		for (int interactions = 0; interactions <= k; interactions++) {
-			itsDependencies[choices].push_back(Configuration(n));
-		}
+Dependencies::Dependencies( unsigned int n, unsigned int k ) {
+	for ( unsigned int choices = 0; choices < n; choices++) {
+		itsDependencies.push_back(Configuration(n, k, true, choices));
+	}
+}
+
+void Dependencies::Show() {
+	vector<Configuration>::iterator iter;
+	string temp;
+	for (iter = itsDependencies.begin(); iter != itsDependencies.end(); ++iter) {
+		(*iter).Display(temp);
+		cout << temp << endl;
 	}
 }
 
 class Choices {
 	public:
-		Choices( unsigned int choiceIndex, Configuration mask);
-		~Choices();
+		Choices( unsigned int choiceIndex, unsigned int itsK, Configuration &mask);
+		~Choices() {};
 	private:
 		unsigned int choiceIndex;
-		double fitness;
-		Configuration itsConfiguration;
+		map<unsigned int, double> itsFitness;
+		Configuration configMask;
 };
 
-Choices::Choices ( unsigned int choiceIndex, Configuration mask ) {
-	fitness = (double)rand() / ((double)(RAND_MAX)+(double)(1));
+Choices::Choices ( unsigned int choiceIndex, unsigned int itsK, Configuration &mask ) {
+	unsigned int itsN = mask.GetN();
+	int kk = 0;
+	unsigned int choiceInt = 0;
+	vector<unsigned int> possibleChoices (itsN, 0);
+	vector<unsigned int>::iterator iter;
+	unsigned int thisChoice = 0;
+	
+	for(iter = possibleChoices.begin(); iter != possibleChoices.end(); ++iter) {
+		*iter = kk++;
+	}
+	
+	/*
+	iter = possibleChoices.begin() + index;
+	possibleChoices.erase(iter);
+	*/
+	
+	string temp;
+	unsigned int totalCombinations = pow(2, itsK + 1);
+	
+	mask.Display(temp);
+	
+	// get rid of the choices that don't matter
+	for (unsigned int pp = (itsN); pp  > 0; pp--) {
+		if (temp[pp] == '0') {
+			iter = possibleChoices.begin() + pp;
+			possibleChoices.erase(iter);
+		}
+	}
+	
+	// now create the vector that contains 2^(k+1) fitness levels
+	unsigned int tempChoice = 0;
+	unsigned int testValue;
+	unsigned int counter = 0;
+	
+	for( unsigned int mm = 0; mm < (itsK + 1); mm++) {
+	
+		tempChoice = 0;
+		counter = 0;
+		for( iter = possibleChoices.begin(); iter != possibleChoices.end(); ++iter) {
+			testValue = pow(2, itsK - counter - 1);
+			if ( mm & testValue == testValue ) {
+				tempChoice += *iter;
+			}
+			counter++;
+		}
+		
+		genConfigString(tempChoice, temp, itsN);
+		cout << temp << endl;
+	}
+	
+	/*
+	for (int i = 0; i < itsK; i++) {
+		thisChoice = possibleChoices.size();
+		choiceInt += pow(2,possibleChoices[thisChoice]);
+		iter = possibleChoices.begin() + thisChoice;
+		possibleChoices.erase(iter);
+	}
+	*/ 
+	
+	double fitness = (double)rand() / ((double)(RAND_MAX)+(double)(1));
+	
 }
 
    /* 
@@ -176,12 +280,26 @@ Choices::Choices ( unsigned int choiceIndex, Configuration mask ) {
 class Position {
 	public:
 		Position( unsigned int size);
-		~Position();
-		
+		Position( unsigned int size, unsigned int positionInt);
+		~Position() {};
+		double GetFitness() { return fitness; };
+		void SetFitness( double f ) { fitness = f; };
 	private:
 		Configuration config;
 		double fitness;
 };
+
+Position::Position ( unsigned int size):
+config(size),
+fitness(0)
+{
+}
+
+Position::Position ( unsigned int size, unsigned int positionInt):
+config(size, positionInt),
+fitness(0)
+{
+}
 
 class Strategy {
 	public: 
@@ -199,11 +317,16 @@ class Landscape {
 		unsigned int itsN;
 		unsigned int itsK;
 		vector<Position> itsPositions;
+		Dependencies itsDeps;
 		bool ComputePayoff();
 		
 };
 
-Landscape::Landscape ( unsigned int size ) {
+Landscape::Landscape ( unsigned int size, unsigned int K ):
+	itsDeps(size, K),
+	itsN(size),
+	itsK(K)
+{
 	
 }
 
@@ -217,7 +340,7 @@ class Entity {
 		Strategy * pStrategy;
 		double fitness;
 		bool alive;
-}
+};
 
 class Multiscape : public Landscape {
 	public:
@@ -225,7 +348,11 @@ class Multiscape : public Landscape {
 		~Multiscape ();
 };
 
-void main () {
-	
+int main () {
+	srand( time(NULL) );
+	Dependencies test(5,3);
+	Configuration mask (7 );
+	Choices test2( 1, 3, mask );
+	test.Show();
 	return 0;
 }
